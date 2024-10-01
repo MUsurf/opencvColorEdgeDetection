@@ -1,0 +1,113 @@
+
+Goal: parse a picture to differentiate between colors
+
+Chat gpt idea
+To differentiate two circles based on color (red and blue) using color-based edge detection, you can follow these steps:
+
+### 1. **Capture or Load the Image**
+   - **Capture** the image from a camera or **load** it from a file using image processing libraries like OpenCV.
+
+### 2. **Preprocess the Image**
+   - Convert the image to a suitable color space (like HSV or LAB) to make color segmentation easier. The HSV color space is often preferred for color-based operations because it separates chromatic content (color) from intensity.
+
+### 3. **Segment Colors**
+   - **Convert** the image to the HSV color space.
+   - **Threshold** the image to create masks for the red and blue colors.
+
+   Here’s how you can do this in OpenCV:
+
+   ```python
+   import cv2
+   import numpy as np
+
+   # Load image
+   image = cv2.imread('your_image.jpg')
+
+   # Convert to HSV color space
+   hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+   # Define color ranges for red and blue
+   lower_red1 = np.array([0, 100, 100])
+   upper_red1 = np.array([10, 255, 255])
+   lower_red2 = np.array([160, 100, 100])
+   upper_red2 = np.array([180, 255, 255])
+
+   lower_blue = np.array([100, 100, 100])
+   upper_blue = np.array([140, 255, 255])
+
+   # Create masks
+   mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+   mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+   mask_red = mask_red1 | mask_red2
+
+   mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+   ```
+
+### 4. **Find Contours**
+   - Use the masks to **find contours** in the segmented red and blue areas. This will help in identifying the circular shapes.
+
+   ```python
+   # Find contours for red and blue masks
+   contours_red, _ = cv2.findContours(mask_red, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   contours_blue, _ = cv2.findContours(mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   ```
+
+### 5. **Filter and Detect Circles**
+   - Use contour approximation and the Hough Circle Transform to detect circles. You can filter contours based on their area or other properties if needed.
+
+   ```python
+   def detect_circles(mask):
+   	# Use HoughCircles to detect circles
+   	circles = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20, param1=50, param2=30, minRadius=10, maxRadius=50)
+   	if circles is not None:
+       	circles = np.round(circles[0, :]).astype("int")
+   	return circles
+
+   circles_red = detect_circles(mask_red)
+   circles_blue = detect_circles(mask_blue)
+   ```
+
+### 6. **Draw and Display Results**
+   - Draw the detected circles and their corresponding colors on the original image.
+
+   ```python
+   def draw_circles(image, circles, color):
+   	for (x, y, r) in circles:
+       	cv2.circle(image, (x, y), r, color, 2)
+
+   # Draw circles
+   draw_circles(image, circles_red, (0, 0, 255))  # Red circles
+   draw_circles(image, circles_blue, (255, 0, 0))  # Blue circles
+
+   # Display the result
+   cv2.imshow("Detected Circles", image)
+   cv2.waitKey(0)
+   cv2.destroyAllWindows()
+   ```
+
+### Additional Considerations
+- **Calibration:** You may need to adjust the color thresholds based on your lighting conditions and camera settings.
+- **Noise Reduction:** Consider using morphological operations like erosion and dilation to clean up the masks before contour detection.
+- **Circle Detection Parameters:** Adjust parameters in the `cv2.HoughCircles` function to better detect circles of different sizes and quality.
+
+By following these steps, you should be able to detect and differentiate between red and blue circles in your image.
+
+https://github.com/MUsurf/opencvColorEdgeDetection
+Step 1: 
+	OpenCV and Git tutorial 
+Comprehensive tutorial: https://www.youtube.com/watch?app=desktop&v=oXlwWbU8l2o
+
+https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
+
+Potentially worth each of us looking at different tutorials. If you don’t like one just google “reddit [git / opencv] best tutorial” and pick a new one
+
+Step 1:
+	Take in image https://universe.roboflow.com/robosubsigns/robosub_signs/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+Step 2 (OpenCV →):
+	Learn to preprocess image to suitable color space.
+		Heighten image to make colors more contrasting 
+Step 3:
+Segment colors (redish/greenish)...
+Step 4:
+Give it an instruction according to color 
+
